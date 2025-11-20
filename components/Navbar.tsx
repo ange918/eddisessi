@@ -15,8 +15,19 @@ export default function Navbar() {
       setIsScrolled(window.scrollY > 20);
     };
 
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.collections-dropdown')) {
+        setIsCollectionsOpen(false);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    document.addEventListener("click", handleClickOutside);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("click", handleClickOutside);
+    };
   }, []);
 
   const collections = [
@@ -57,27 +68,40 @@ export default function Navbar() {
 
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <div key={link.name} className="relative group">
+              <div key={link.name} className="relative">
                 {link.hasDropdown ? (
-                  <div>
+                  <div className="collections-dropdown">
                     <button
                       className="flex items-center space-x-1 text-[#333333] hover:text-[#D4AF37] transition-colors duration-300 font-medium"
                       onClick={() => setIsCollectionsOpen(!isCollectionsOpen)}
+                      aria-expanded={isCollectionsOpen}
+                      aria-haspopup="true"
                     >
                       <span>{link.name}</span>
-                      <ChevronDown className="w-4 h-4" />
+                      <ChevronDown className={`w-4 h-4 transition-transform ${isCollectionsOpen ? 'rotate-180' : ''}`} />
                     </button>
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
-                      {collections.map((collection) => (
-                        <Link
-                          key={collection.name}
-                          href={collection.href}
-                          className="block px-4 py-3 text-[#333333] hover:text-[#D4AF37] hover:bg-[#F7F7F7] transition-colors duration-300 first:rounded-t-xl last:rounded-b-xl"
+                    <AnimatePresence>
+                      {isCollectionsOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute top-full left-0 mt-2 w-48 bg-white shadow-lg rounded-xl overflow-hidden"
                         >
-                          {collection.name}
-                        </Link>
-                      ))}
-                    </div>
+                          {collections.map((collection) => (
+                            <Link
+                              key={collection.name}
+                              href={collection.href}
+                              className="block px-4 py-3 text-[#333333] hover:text-[#D4AF37] hover:bg-[#F7F7F7] transition-colors duration-300"
+                              onClick={() => setIsCollectionsOpen(false)}
+                            >
+                              {collection.name}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 ) : (
                   <Link
@@ -112,7 +136,7 @@ export default function Navbar() {
               {navLinks.map((link) => (
                 <div key={link.name}>
                   {link.hasDropdown ? (
-                    <div>
+                    <div className="collections-dropdown">
                       <button
                         className="w-full text-left flex items-center justify-between text-[#333333] hover:text-[#D4AF37] transition-colors py-2"
                         onClick={() => setIsCollectionsOpen(!isCollectionsOpen)}
